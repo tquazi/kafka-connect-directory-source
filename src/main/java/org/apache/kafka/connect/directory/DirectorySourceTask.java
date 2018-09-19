@@ -142,7 +142,7 @@ public class DirectorySourceTask extends SourceTask {
         messageStruct.put("path", file.getPath());
         messageStruct.put("event", "pending");
         messageStruct.put("state", "pending");
-		messageStruct.put("content", getContents(file.getName()));
+		messageStruct.put("content", getContents(file.getPath()));
         return new SourceRecord(Collections.singletonMap(file.toString(), "state"), Collections.singletonMap("pending", "yes"), topic, messageStruct.schema(), messageStruct);
     }
 
@@ -159,7 +159,7 @@ public class DirectorySourceTask extends SourceTask {
         messageStruct.put("path", file.getPath());
         messageStruct.put("event", "committed");
         messageStruct.put("state", "pending");
-		messageStruct.put("content", getContents(file.getName()));
+		messageStruct.put("content", getContents(file.getPath()));
         recs.add(new SourceRecord(Collections.singletonMap(file.toString(), "state"), Collections.singletonMap("committed", "yes"), topic, messageStruct.schema(), messageStruct));
 
         try {
@@ -173,7 +173,7 @@ public class DirectorySourceTask extends SourceTask {
             messageStruct.put("event", lastMod.compareTo(created) <= 0 ? "CREATED" : "MODIFIED");
             messageStruct.put("state", "committed");
 			//String content = new String(Files.readAllBytes(Paths.get(file.getName())));
-			messageStruct.put("content", getContents(file.getName()));
+			messageStruct.put("content", getContents(file.getPath()));
             // creates the record
             // no need to save offsets
             recs.add(new SourceRecord(offsetKey(), offsetValue(lastMod.compareTo(created) > 0 ? lastMod : created), topic, messageStruct.schema(), messageStruct));
