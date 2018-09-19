@@ -6,6 +6,9 @@ import org.apache.kafka.connect.errors.ConnectException;
 import org.apache.kafka.connect.source.SourceConnector;
 import org.apache.kafka.connect.util.ConnectorUtils;
 import org.apache.kafka.connect.utils.StringUtils;
+import org.apache.kafka.common.config.Config;
+import org.apache.kafka.common.config.ConfigDef;
+import org.apache.kafka.common.config.ConfigValue;
 
 import java.util.*;
 
@@ -26,7 +29,10 @@ public class DirectorySourceConnector extends SourceConnector {
     private String check_dir_ms;
     private String schema_name;
     private String topic;
+	
+	private static final ConfigDef CONFIG_DEF = new ConfigDef();
 
+  
     /**
      * Get the version of this connector.
      *
@@ -105,5 +111,17 @@ public class DirectorySourceConnector extends SourceConnector {
     public void stop() {
 
     }
+	
+	@Override
+	public ConfigDef config() {
+		return CONFIG_DEF;
+	}
+
+	@Override
+	public Config validate(Map<String, String> connectorConfigs) {
+		ConfigDef configDef = config();
+		List<ConfigValue> configValues = configDef.validate(connectorConfigs);
+		return new Config(configValues);
+	}
 
 }

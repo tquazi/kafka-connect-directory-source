@@ -11,7 +11,7 @@ import org.apache.kafka.connect.utils.DirWatcher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
+import java.io.*;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.RandomAccessFile;
@@ -89,6 +89,7 @@ public class DirectorySourceTask extends SourceTask {
                 .field("path", Schema.OPTIONAL_STRING_SCHEMA)
                 .field("event", Schema.OPTIONAL_STRING_SCHEMA)
                 .field("state", Schema.OPTIONAL_STRING_SCHEMA)
+				.field("content", Schema.OPTIONAL_STRING_SCHEMA)
                 .build();
     }
 
@@ -141,6 +142,7 @@ public class DirectorySourceTask extends SourceTask {
         messageStruct.put("path", file.getPath());
         messageStruct.put("event", "pending");
         messageStruct.put("state", "pending");
+		messageStruct.put("content", getContents(file.getName()));
         return new SourceRecord(Collections.singletonMap(file.toString(), "state"), Collections.singletonMap("pending", "yes"), topic, messageStruct.schema(), messageStruct);
     }
 
@@ -157,6 +159,7 @@ public class DirectorySourceTask extends SourceTask {
         messageStruct.put("path", file.getPath());
         messageStruct.put("event", "committed");
         messageStruct.put("state", "pending");
+		messageStruct.put("content", getContents(file.getName()));
         recs.add(new SourceRecord(Collections.singletonMap(file.toString(), "state"), Collections.singletonMap("committed", "yes"), topic, messageStruct.schema(), messageStruct));
 
         try {
@@ -169,6 +172,8 @@ public class DirectorySourceTask extends SourceTask {
             messageStruct.put("path", file.getPath());
             messageStruct.put("event", lastMod.compareTo(created) <= 0 ? "CREATED" : "MODIFIED");
             messageStruct.put("state", "committed");
+			//String content = new String(Files.readAllBytes(Paths.get(file.getName())));
+			messageStruct.put("content", getContents(file.getName()));
             // creates the record
             // no need to save offsets
             recs.add(new SourceRecord(offsetKey(), offsetValue(lastMod.compareTo(created) > 0 ? lastMod : created), topic, messageStruct.schema(), messageStruct));
@@ -203,4 +208,23 @@ public class DirectorySourceTask extends SourceTask {
         task.cancel();
     }
 
+	
+	private String getContents(String fileName){
+		String content = "";
+		try {
+			BufferedReader reader = new BufferedReader(new FileReader(fileName));
+			StringBuilder stringBuilder = new StringBuilder();
+			char[] buffer = new char[10];
+			while (reader.read(buffer) != -1) {
+				stringBuilder.append(new String(buffer));
+				buffer = new char[10];
+			}
+			reader.close();
+
+			content = stringBuilder.toString();
+		}catch (Exception e) {
+			e.printStackTrace();
+        }
+		return content;
+	}
 }
