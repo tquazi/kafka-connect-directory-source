@@ -117,10 +117,10 @@ public class DirectorySourceTask extends SourceTask {
 					System.out.println("Exception");
                     retries.add(file);
                     //records.add(createPendingRecord(file));
-                    
+                    lock.release();
                 } finally {
                     in.close();
-					lock.release();
+					
 					System.out.println("In finally");
                 }
             } catch(Exception ex) {
