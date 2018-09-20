@@ -67,7 +67,7 @@ public abstract class DirWatcher extends TimerTask {
             BasicFileAttributes fa = Files.readAttributes(path, BasicFileAttributes.class, options);
             FileTime changed = Files.readAttributes(path, BasicFileAttributes.class, options).lastAccessTime();
 
-            boolean hasUpdate = (fa.isRegularFile() && (lastUpdate == null || changed.compareTo(lastUpdate) > 0 || isPending(path)));
+            boolean hasUpdate = (fa.isRegularFile() && (lastUpdate == null || changed.compareTo(lastUpdate) > 0));
             if (maxTimestamp == null || changed.compareTo(maxTimestamp) > 0)
                 maxTimestamp = changed;
             return hasUpdate;
