@@ -101,6 +101,7 @@ public abstract class DirWatcher extends TimerTask {
             filesQueue.addAll(Arrays.asList(filesArray));
             lastUpdate = maxTimestamp;
             for (File f: filesArray) {
+				 System.out.println("File in dir watcher" + f.getName() + " action: NEW OR MODIFIED");
                 onChange(f, "NEW OR MODIFIED");
             }
         } catch (IOException e) {
