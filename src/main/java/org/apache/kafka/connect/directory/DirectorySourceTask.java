@@ -87,9 +87,7 @@ public class DirectorySourceTask extends SourceTask {
                 .name(schemaName)
                 .field("name", Schema.OPTIONAL_STRING_SCHEMA)
                 .field("path", Schema.OPTIONAL_STRING_SCHEMA)
-                .field("event", Schema.OPTIONAL_STRING_SCHEMA)
-                .field("state", Schema.OPTIONAL_STRING_SCHEMA)
-				.field("content", Schema.OPTIONAL_STRING_SCHEMA)
+                .field("content", Schema.OPTIONAL_STRING_SCHEMA)
                 .build();
     }
 
@@ -117,14 +115,14 @@ public class DirectorySourceTask extends SourceTask {
                     lock.release();
                 } catch(Exception ex) {
                     retries.add(file);
-                    records.add(createPendingRecord(file));
+                    //records.add(createPendingRecord(file));
                     lock.release();
                 } finally {
                     in.close();
                 }
             } catch(Exception ex) {
                 retries.add(file);
-                records.add(createPendingRecord(file));
+                //records.add(createPendingRecord(file));
             }
         }
         if (retries.size() > 0) {
@@ -140,8 +138,6 @@ public class DirectorySourceTask extends SourceTask {
         Struct messageStruct = new Struct(schema);
         messageStruct.put("name", file.getName());
         messageStruct.put("path", file.getPath());
-        messageStruct.put("event", "pending");
-        messageStruct.put("state", "pending");
 		messageStruct.put("content", getContents(file.getPath()));
         return new SourceRecord(Collections.singletonMap(file.toString(), "state"), Collections.singletonMap("pending", "yes"), topic, messageStruct.schema(), messageStruct);
     }
@@ -157,28 +153,9 @@ public class DirectorySourceTask extends SourceTask {
         Struct messageStruct = new Struct(schema);
         messageStruct.put("name", file.getName());
         messageStruct.put("path", file.getPath());
-        messageStruct.put("event", "committed");
-        messageStruct.put("state", "pending");
 		messageStruct.put("content", getContents(file.getPath()));
         recs.add(new SourceRecord(Collections.singletonMap(file.toString(), "state"), Collections.singletonMap("committed", "yes"), topic, messageStruct.schema(), messageStruct));
 
-        try {
-            BasicFileAttributes fa = Files.readAttributes(file.toPath(), BasicFileAttributes.class);
-            FileTime lastMod = fa.lastModifiedTime();
-            FileTime created = fa.lastAccessTime();
-
-            messageStruct = new Struct(schema);
-            messageStruct.put("name", file.getName());
-            messageStruct.put("path", file.getPath());
-            messageStruct.put("event", lastMod.compareTo(created) <= 0 ? "CREATED" : "MODIFIED");
-            messageStruct.put("state", "committed");
-			//String content = new String(Files.readAllBytes(Paths.get(file.getName())));
-			messageStruct.put("content", getContents(file.getPath()));
-            // creates the record
-            // no need to save offsets
-            recs.add(new SourceRecord(offsetKey(), offsetValue(lastMod.compareTo(created) > 0 ? lastMod : created), topic, messageStruct.schema(), messageStruct));
-        } catch (IOException e) {
-        }
         return recs;
     }
 
