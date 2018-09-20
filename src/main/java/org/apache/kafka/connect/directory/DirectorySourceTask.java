@@ -114,13 +114,17 @@ public class DirectorySourceTask extends SourceTask {
                     records.addAll(createUpdateRecord(file));
                     lock.release();
                 } catch(Exception ex) {
+					System.out.println("Exception");
                     retries.add(file);
                     //records.add(createPendingRecord(file));
-                    lock.release();
+                    
                 } finally {
                     in.close();
+					lock.release();
+					System.out.println("In finally");
                 }
             } catch(Exception ex) {
+				System.out.println("in catch");
                 retries.add(file);
                 //records.add(createPendingRecord(file));
             }
