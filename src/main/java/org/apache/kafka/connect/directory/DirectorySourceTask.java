@@ -113,7 +113,8 @@ public class DirectorySourceTask extends SourceTask {
 					try {
 						lock = in.getChannel().lock();
 						records.addAll(createUpdateRecord(file));
-						if(file.renameTo(new File(tmp_path+"\\processed\\" + file.getName()))){
+						System.out.println(tmp_path+"\\processed\\" + file.getName());
+						if(file.renameTo(new File(tmp_path+"processed\\" + file.getName()))){
 							System.out.println("File is moved successful!");
 						}else{
 							System.out.println("File is failed to move!");
