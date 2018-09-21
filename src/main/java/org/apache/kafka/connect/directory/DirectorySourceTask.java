@@ -104,36 +104,37 @@ public class DirectorySourceTask extends SourceTask {
         List<SourceRecord> records = new ArrayList<>();
 		File folder = new File(tmp_path);
 		File[] listOfFiles = folder.listFiles();
-
-		for (File file : listOfFiles) {
-			if (file.isFile()) {
-				try {
-					RandomAccessFile in = new RandomAccessFile(file, "rw");
-					FileLock lock = null;
+		if(listOfFiles != null){
+			for (File file : listOfFiles) {
+				if (file.isFile()) {
 					try {
-						lock = in.getChannel().lock();
-						records.addAll(createUpdateRecord(file));
-						System.out.println(tmp_path+"\\processed\\" + file.getName());
-						if(file.renameTo(new File(tmp_path+"processed\\" + file.getName()))){
-							System.out.println("File is moved successful!");
-						}else{
-							System.out.println("File is failed to move!");
+						RandomAccessFile in = new RandomAccessFile(file, "rw");
+						FileLock lock = null;
+						try {
+							lock = in.getChannel().lock();
+							records.addAll(createUpdateRecord(file));
+							System.out.println(tmp_path+"/processed/" + file.getName());
+							if(file.renameTo(new File(tmp_path+"/processed/" + file.getName()))){
+								System.out.println("File is moved successful!");
+							}else{
+								System.out.println("File is failed to move!");
+							}
+							lock.release();
+						} catch(Exception ex) {
+							System.out.println("Exception");
+							
+							//records.add(createPendingRecord(file));
+							lock.release();
+						} finally {
+							in.close();
+
+							System.out.println("In finally");
 						}
-						lock.release();
 					} catch(Exception ex) {
-						System.out.println("Exception");
+						System.out.println("in catch");
 						
 						//records.add(createPendingRecord(file));
-						lock.release();
-					} finally {
-						in.close();
-
-						System.out.println("In finally");
 					}
-				} catch(Exception ex) {
-					System.out.println("in catch");
-					
-					//records.add(createPendingRecord(file));
 				}
 			}
 		}
