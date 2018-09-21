@@ -102,38 +102,43 @@ public class DirectorySourceTask extends SourceTask {
     public List<SourceRecord> poll() throws InterruptException {
 
         List<SourceRecord> records = new ArrayList<>();
-        Queue<File> queue = ((DirWatcher) task).getFilesQueue();
-        //consume here the pool
-        while (!queue.isEmpty()) {
-            File file = queue.poll();
-            try {
-                RandomAccessFile in = new RandomAccessFile(file, "rw");
-                FileLock lock = null;
-                try {
-                    lock = in.getChannel().lock();
-                    records.addAll(createUpdateRecord(file));
-                    lock.release();
-                } catch(Exception ex) {
-					System.out.println("Exception");
-                    retries.add(file);
-                    //records.add(createPendingRecord(file));
-                    lock.release();
-                } finally {
-                    in.close();
-					
-					System.out.println("In finally");
-                }
-            } catch(Exception ex) {
-				System.out.println("in catch");
-                retries.add(file);
-                //records.add(createPendingRecord(file));
-            }
-        }
-        if (retries.size() > 0) {
-            queue.addAll(retries);
-            retries.clear();
-        }
+		File folder = new File(tmp_path);
+		File[] listOfFiles = folder.listFiles();
 
+		for (File file : listOfFiles) {
+			if (file.isFile()) {
+				try {
+					RandomAccessFile in = new RandomAccessFile(file, "rw");
+					FileLock lock = null;
+					try {
+						lock = in.getChannel().lock();
+						records.addAll(createUpdateRecord(file));
+						if(file.renameTo(new File(tmp_path+"\\processed\\" + file.getName()))){
+							System.out.println("File is moved successful!");
+						}else{
+							System.out.println("File is failed to move!");
+						}
+						lock.release();
+					} catch(Exception ex) {
+						System.out.println("Exception");
+						
+						//records.add(createPendingRecord(file));
+						lock.release();
+					} finally {
+						in.close();
+
+						System.out.println("In finally");
+					}
+				} catch(Exception ex) {
+					System.out.println("in catch");
+					
+					//records.add(createPendingRecord(file));
+				}
+			}
+		}
+		
+	
+       
         return records;
     }
 
