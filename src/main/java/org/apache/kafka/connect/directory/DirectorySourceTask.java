@@ -154,12 +154,22 @@ public class DirectorySourceTask extends SourceTask {
     private List<SourceRecord> createUpdateRecord(File file) {
         List<SourceRecord> recs = new ArrayList<>();
         // creates the structured message
+		try {
+		BasicFileAttributes fa = Files.readAttributes(file.toPath(), BasicFileAttributes.class);
+            FileTime lastMod = fa.lastModifiedTime();
+            FileTime created = fa.lastAccessTime();
+
+			
+			
         Struct messageStruct = new Struct(schema);
         messageStruct.put("name", file.getName());
         messageStruct.put("path", file.getPath());
 		messageStruct.put("content", getContents(file.getPath()));
-        recs.add(new SourceRecord(Collections.singletonMap(file.toString(), "state"), Collections.singletonMap("committed", "yes"), topic, messageStruct.schema(), messageStruct));
-
+        //recs.add(new SourceRecord(Collections.singletonMap(file.toString(), "state"), Collections.singletonMap("committed", "yes"), topic, messageStruct.schema(), messageStruct));
+		recs.add(new SourceRecord(offsetKey(), offsetValue(lastMod.compareTo(created) > 0 ? lastMod : created), topic, messageStruct.schema(), messageStruct));
+		}catch (IOException e) {
+			e.printStackTrace();
+        }
         return recs;
     }
 
